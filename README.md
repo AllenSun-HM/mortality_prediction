@@ -45,7 +45,7 @@ More options and descriptions of these arguments can be found in [timeseries_tra
 #### 2. Run [ts_get_embeddings.py](https://github.com/AllenSun-HM/mortality_prediction/blob/main/timeseries_transformer/ts_get_embeddings.py) to get the embeddings for timeseries data. 
 The embeddings will be stored at /final_classifier/embeddings/ts_train_embedding.csv and /final_classifier/embeddings/ts_val_embedding.csv.
 
-## Step 3 Merge embeddings to train final classifier
+## Step 3 Merge embeddings and Train Final Classifier
 ### 1. merge embeddings from all three modalities
 run [merge_datasets.py](https://github.com/AllenSun-HM/mortality_prediction/blob/main/final_classifier/merge_datasets.py) 
 
