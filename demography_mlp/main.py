@@ -24,10 +24,10 @@ def main():
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     writer = SummaryWriter()
-    id = time.time()
-    train(config, train_loader, val_loader, writer, id)
+    model_id = time.time()
+    train(config, train_loader, val_loader, writer, model_id) # train the model and save the model at {model_id}_model.pth
     model = MimicDemographyModel().to(device)
-    model.load_state_dict(torch.load(str(id)+"_model.pth"))
+    model.load_state_dict(torch.load(str(model_id)+"_model.pth"))
     test_loss, test_acc, AUROC, AUPRC = test(test_loader, model, config)
     print({'test_loss': test_loss, 'test_acc': test_acc, 'AUROC': AUROC, 'AUPRC': AUPRC})
 

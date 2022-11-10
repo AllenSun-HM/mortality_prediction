@@ -2,6 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/../mimic3_data_preprocessing/.idea/mimic3_data_preprocessing.iml" filepath="$PROJECT_DIR$/../mimic3_data_preprocessing/.idea/mimic3_data_preprocessing.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/mortality_prediction.iml" filepath="$PROJECT_DIR$/.idea/mortality_prediction.iml" />
     </modules>
   </component>

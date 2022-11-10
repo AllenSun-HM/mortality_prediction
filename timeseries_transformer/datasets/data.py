@@ -1,9 +1,12 @@
+from typing import Optional
+import os
 from multiprocessing import Pool, cpu_count
+import glob
+import re
 import logging
 
 import numpy as np
 import pandas as pd
-
 
 logger = logging.getLogger('__main__')
 
@@ -35,11 +38,13 @@ class Normalizer(object):
         Returns:
             df: normalized dataframe
         """
+        print('std', df.std())
         if self.norm_type == "standardization":
             if self.mean is None:
                 self.mean = df.mean()
             if self.std is None:
                 self.std = df.std()
+
             return (df - self.mean) / (self.std + np.finfo(float).eps)
 
         elif self.norm_type == "minmax":
@@ -89,11 +94,9 @@ class BaseData(object):
             self.n_proc = min(n_proc, cpu_count())
 
 
-
-
 class MimicData(BaseData):
     """
-    Dataset class for MIMICIII dataset.
+    Dataset class for Machine dataset.
     Attributes:
         all_df: dataframe indexed by ID, with multiple rows corresponding to the same index (sample).
             Each row is a time step; Each column contains either metadata (e.g. timestamp) or a feature.
@@ -102,26 +105,27 @@ class MimicData(BaseData):
         all_IDs: IDs contained in `all_df`/`feature_df` (same as all_df.index.unique() )
         max_seq_len: maximum sequence (time series) length. If None, script argument `max_seq_len` will be used.
             (Moreover, script argument overrides this attribute)
-        class_names: [0, 1] 0 means in-hospital survival, 1 means in-hospital mortality
-        labels_df: contains the 'mortality' column of `all_df`
-        imputed_values_df: a df that contains empirical values of each EHR data
     """
-    imputed_values_df = None;
-    def __init__(self, root_dir, file_list=None, pattern=None, n_proc=1, limit_size=None, config=None, labels_path=None, imputed_values_path=None):
+    imputed_values_df = pd.read_csv('~/mvts_transformer/timeseries_transformer/resources/variable_ranges.csv',
+                                    index_col=['LEVEL2'])
+
+    def __init__(self, root_dir, file_list=None, pattern=None, n_proc=1, limit_size=None, labels_path=None):
 
         self.set_num_processes(n_proc=n_proc)
-        if not labels_path:
-            self.labels_path = "~/Desktop/mimic3-benchmarks/data/in-hospital-mortality/listfile.csv"
+        if labels_path == None:
+            self.labels_path = "~/data/in-hospital-mortality/listfile.csv"
         else:
             self.labels_path = labels_path
         self.all_df, self.labels_df = self.load_all(root_dir, file_list=file_list, pattern=pattern)
+        self.missing_mask = self.all_df.values == 0
         self.class_names = [0, 1]
+        # print('missing_mask', self.missing_mask)
         self.all_df = self.all_df.set_index('ID')
         self.labels_df = self.labels_df.set_index('ID')
 
         self.all_IDs = self.all_df.index.unique()  # all sample (session) IDs
-        self.labels_df = self.labels_df[self.labels_df.index.isin(set(self.all_IDs.values))]
-        self.max_seq_len = 48
+        # self.labels_df = self.labels_df[self.labels_df.index.isin(self.all_IDs.values)]
+        self.max_seq_len = 100
         if limit_size is not None:
             if limit_size > 1:
                 limit_size = int(limit_size)
@@ -129,14 +133,9 @@ class MimicData(BaseData):
                 limit_size = int(limit_size * len(self.all_IDs))
             self.all_IDs = self.all_IDs[:limit_size]
             self.all_df = self.all_df.loc[self.all_IDs]
+
         self.feature_names = ["Diastolic blood pressure", "Systolic blood pressure", "Glascow coma scale total", "Respiratory rate", "Oxygen saturation", "Mean blood pressure", "Heart Rate", "Temperature", "Fraction inspired oxygen", 'Glucose', 'Glascow coma scale eye opening', 'Glascow coma scale motor response', 'Glascow coma scale verbal response']
         self.feature_df = self.all_df[self.feature_names]
-        if imputed_values_path:
-            MimicData.imputed_values_df = pd.read_csv(imputed_values_path,
-                                            index_col=['LEVEL2'])
-        else:
-            MimicData.imputed_values_df = pd.read_csv("/Users/allen/Desktop/mvts_transformer/src/resources/variable_ranges.csv",
-                                        index_col=['LEVEL2'])
 
     def load_all(self, root_dir, file_list=None, pattern=None):
         """
@@ -149,9 +148,11 @@ class MimicData(BaseData):
         Returns:
             all_df: a single (possibly concatenated) dataframe with all data corresponding to specified files
         """
+        # each file name corresponds to another date. Also tools (A, B) and others.
+
         labels_df = pd.read_csv(self.labels_path)
 
-        input_paths = list(map(lambda path: "/Users/allen/Desktop/mimic3-benchmarks/data/in-hospital-mortality/train/" + path, labels_df['stay'].values))
+        input_paths = list(map(lambda path: "~/data/in-hospital-mortality/train/" + path, labels_df['stay'].values))
 
         labels_df = labels_df[['HADM_ID', 'y_true']]
         labels_df = labels_df.rename(columns={'HADM_ID': 'ID'})
@@ -163,6 +164,7 @@ class MimicData(BaseData):
                 all_df = pd.concat(pool.map(self.load_single, input_paths))
         else:  # read 1 file at a time
             all_df = pd.concat(self.load_single(path) for path in input_paths)
+
         return all_df, labels_df
 
     @staticmethod
@@ -172,24 +174,13 @@ class MimicData(BaseData):
         num_nan = df.isna().sum().sum()
         if num_nan > 0:
             df = df.interpolate(method='linear', limit_direction='forward', axis=0)
-
+            df = df.fillna(df.mean())
             if df.isna().sum().sum() > 0:
                 for col in df.columns:
-                    if col == 'ID' or col == 'Hours':
+                    if col == 'ID':
                         continue
                     df[col] = df[col].fillna(MimicData.imputed_values_df.loc[col, 'IMPUTE'])
             logger.warning("{} nan values in {} will be filled by linear interpolation and mean filling".format(num_nan, filepath))
-        df = df.set_index('Hours')
-        hour_bins = {}
-        for index in df.index:
-            bin = int(index / 1)
-            if bin in hour_bins:
-                df = df.drop(hour_bins[bin], errors='ignore')
-            hour_bins[bin] = float(index)
-        for column in df.columns:
-            if column in {'ID', 'Hours'}:
-                continue
-            df = df[(df[column] >= MimicData.imputed_values_df.loc[column, 'VALID LOW']) & (df[column] <= MimicData.imputed_values_df.loc[column, 'VALID HIGH'])]
         return df
 
     @staticmethod
@@ -202,8 +193,9 @@ class MimicData(BaseData):
     @staticmethod
     def select_columns(df):
         """"""
-        keep_cols = ["ID", "Hours", "Diastolic blood pressure", "Systolic blood pressure", "Glascow coma scale total", "Respiratory rate", "Oxygen saturation", "Mean blood pressure", "Heart Rate", "Temperature", "Fraction inspired oxygen", 'Glucose', 'Glascow coma scale eye opening', 'Glascow coma scale motor response', 'Glascow coma scale verbal response']
+        keep_cols = ["ID", "Diastolic blood pressure", "Systolic blood pressure", "Glascow coma scale total", "Respiratory rate", "Oxygen saturation", "Mean blood pressure", "Heart Rate", "Temperature", "Fraction inspired oxygen", 'Glucose', 'Glascow coma scale eye opening', 'Glascow coma scale motor response', 'Glascow coma scale verbal response']
         df = df[keep_cols]
+
         return df
 
 data_factory = {'mimic': MimicData}

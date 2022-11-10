@@ -12,7 +12,7 @@ class MimicDataset():
         self.is_test = is_test
         self.data = data.iloc[:, 2].values
         self.labels = data.iloc[:, 1].values
-        if not is_test: #train set/val set
+        if not is_test: # train set/val set
             self.IDs = data.iloc[:, 0].values
 
         for i in range(len(self.data)):
@@ -23,7 +23,7 @@ class MimicDataset():
     def __getitem__(self, index):
         features = self.data[index]
         label = self.labels[index]
-        if not self.is_test: #for train set/val set
+        if not self.is_test: # for train set/val set
             id = self.IDs[index]
             return features, label, id
         return features, label

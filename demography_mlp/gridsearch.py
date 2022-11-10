@@ -9,7 +9,9 @@ from ray import tune
 from model import test
 
 
-
+'''
+grid search the best hyperparameters for the model
+'''
 
 def main(config):
     device = "cuda" if torch.cuda.is_available() else "cpu"

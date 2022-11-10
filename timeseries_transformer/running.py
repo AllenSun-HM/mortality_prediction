@@ -34,14 +34,6 @@ def pipeline_factory(config):
 
     task = config['task']
 
-    if task == "imputation":
-        return partial(ImputationDataset, mean_mask_length=config['mean_mask_length'],
-                       masking_ratio=config['masking_ratio'], mode=config['mask_mode'],
-                       distribution=config['mask_distribution'], exclude_feats=config['exclude_feats']),\
-                        collate_unsuperv, UnsupervisedRunner
-    if task == "transduction":
-        return partial(TransductionDataset, mask_feats=config['mask_feats'],
-                       start_hint=config['start_hint'], end_hint=config['end_hint']), collate_unsuperv, UnsupervisedRunner
     if (task == "classification") or (task == "regression"):
         return ClassiregressionDataset, collate_superv, SupervisedRunner
     else:

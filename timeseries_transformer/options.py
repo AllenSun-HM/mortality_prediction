@@ -21,24 +21,10 @@ class Options(object):
                                  help='Data directory')
         self.parser.add_argument('--load_model',
                                  help='Path to pre-trained model.')
-        self.parser.add_argument('--resume', action='store_true',
-                                 help='If set, will load `starting_epoch` and state of optimizer, besides model weights.')
-        self.parser.add_argument('--change_output', action='store_true',
-                                 help='Whether the loaded model will be fine-tuned on a different task (necessitating a different output layer)')
-        self.parser.add_argument('--save_all', action='store_true',
-                                 help='If set, will save model weights (and optimizer state) for every epoch; otherwise just latest')
         self.parser.add_argument('--name', dest='experiment_name', default='',
                                  help='A string identifier/name for the experiment to be run - it will be appended to the output directory name, before the timestamp')
         self.parser.add_argument('--comment', type=str, default='', help='A comment/description of the experiment')
-        self.parser.add_argument('--no_timestamp', action='store_true',
-                                 help='If set, a timestamp will not be appended to the output directory name')
-        self.parser.add_argument('--records_file', default='./records.xls',
-                                 help='Excel file keeping all records of experiments')
         # System
-        self.parser.add_argument('--console', action='store_true',
-                                 help="Optimize printout for console output; otherwise for file")
-        self.parser.add_argument('--print_interval', type=int, default=1,
-                                 help='Print batch info every this many batches')
         self.parser.add_argument('--gpu', type=str, default='0',
                                  help='GPU index, -1 for CPU')
         self.parser.add_argument('--n_proc', type=int, default=-1,
@@ -56,29 +42,6 @@ class Options(object):
                                  help='If set, no training will take place; instead, trained model will be loaded and evaluated on test set')
         self.parser.add_argument('--data_class', type=str, default='weld',
                                  help="Which type of data should be processed.")
-        self.parser.add_argument('--labels', type=str,
-                                 help="In case a dataset contains several labels (multi-task), "
-                                      "which type of labels should be used in regression or classification, i.e. name of column(s).")
-        self.parser.add_argument('--test_from',
-                                 help='If given, will read test IDs from specified text file containing sample IDs one in each row')
-        self.parser.add_argument('--test_ratio', type=float, default=0,
-                                 help="Set aside this proportion of the dataset as a test set")
-        self.parser.add_argument('--val_ratio', type=float, default=0.2,
-                                 help="Proportion of the dataset to be used as a validation set")
-        self.parser.add_argument('--pattern', type=str,
-                                 help='Regex pattern used to select files contained in `data_dir`. If None, all data will be used.')
-        self.parser.add_argument('--val_pattern', type=str,
-                                 help="""Regex pattern used to select files contained in `data_dir` exclusively for the validation set.
-                            If None, a positive `val_ratio` will be used to reserve part of the common data set.""")
-        self.parser.add_argument('--val_list', type=str,
-                                 help="""Regex pattern used to select files contained in `data_dir` exclusively for the validation set.
-                            If None, a positive `val_ratio` will be used to reserve part of the common data set.""")
-        self.parser.add_argument('--train_list', type=str,
-                                 help="""Regex pattern used to select files contained in `data_dir` exclusively for the validation set.
-                            If None, a positive `val_ratio` will be used to reserve part of the common data set.""")
-        self.parser.add_argument('--test_pattern', type=str,
-                                 help="""Regex pattern used to select files contained in `data_dir` exclusively for the test set.
-                            If None, `test_ratio`, if specified, will be used to reserve part of the common data set.""")
         self.parser.add_argument('--normalization',
                                  choices={'standardization', 'minmax', 'per_sample_std', 'per_sample_minmax'},
                                  default='standardization',
@@ -89,8 +52,6 @@ class Options(object):
         self.parser.add_argument('--norm_std_from',
                                  help="""If given, will read normalization values (e.g. mean, std, min, max) from specified pickle file.
                             The columns correspond to features, rows correspond to mean, std or min, max.""")
-        self.parser.add_argument('--subsample_factor', type=int,
-                                 help='Sub-sampling factor used for long sequences: keep every kth sample')
         # Training process
         self.parser.add_argument('--task', choices={"imputation", "transduction", "classification", "regression"},
                                  default="imputation",
