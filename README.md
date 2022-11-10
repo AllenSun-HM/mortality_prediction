@@ -41,6 +41,7 @@ python3 timeseries_transformer/main.py --output_dir experiments --name mimic_fro
 
 More options and descriptions of these arguments can be found in [timeseries_transformer/options.py](https://github.com/AllenSun-HM/mortality_prediction/blob/main/timeseries_transformer/options.py).
 
+
 #### 2. Run [ts_get_embeddings.py](https://github.com/AllenSun-HM/mortality_prediction/blob/main/timeseries_transformer/ts_get_embeddings.py) to get the embeddings for timeseries data. 
 The embeddings will be stored at /final_classifier/embeddings/ts_train_embedding.csv and /final_classifier/embeddings/ts_val_embedding.csv.
 
@@ -48,7 +49,7 @@ The embeddings will be stored at /final_classifier/embeddings/ts_train_embedding
 ### 1. merge embeddings from all three modalities
 run [merge_datasets.py](https://github.com/AllenSun-HM/mortality_prediction/blob/main/final_classifier/merge_datasets.py) 
 
-This will store the merged embeddings at embeddings/all_train.csv and embeddings/all_val.csv.
+This will merge and store the merged embeddings at embeddings/all_train.csv and embeddings/all_val.csv.
 ### 2. train the final classifier
 run [main.py](https://github.com/AllenSun-HM/mortality_prediction/blob/main/final_classifier/main.py) with hyperparameter arguments.
 ```{bash}
