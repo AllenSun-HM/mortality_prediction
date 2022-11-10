@@ -2,7 +2,7 @@
 
 ## Step 1
 populate the [data](https://github.com/AllenSun-HM/mortality_prediction/data) folder with the output from [MIMICIII Preprocessing](https://github.com/AllenSun-HM/mimic3-data-preprocessing/data) .
-![Drag Racing](https://github.com/AllenSun-HM/mortality_prediction/blob/main/resources/img_1.jpg)
+![Drag Racing](https://github.com/AllenSun-HM/mortality_prediction/blob/main/resources/img_1.png)
 ## Step 2 Train Modality-specific models and get embeddings
 ### MLP for demography & diagnosis data
 #### 1. Run [main.py](https://github.com/AllenSun-HM/mortality_prediction/blob/main/demography_mlp/main.py) to train the model.
